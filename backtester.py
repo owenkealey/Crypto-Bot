@@ -30,6 +30,13 @@ def start():
     webbrowser.open("http://127.0.0.1:5000")
 
 
+def plot_graph(x, y):
+    plt.plot(x, y)
+    plt.xlabel("Day")
+    plt.ylabel("Portfolio Value")
+    plt.show()
+
+
 def get_average(averages_list):
     total = 0 
     for data_set in averages_list:
@@ -41,9 +48,9 @@ def moving_averages():
     """
     If the 3 day average price of ETH is above the 5 day average price, buy. If below, sell.
     """
+    global message
     ethereum = 0
     cash = 10000
-    portfolio_value = 0
     x_values = []
     y_values = []
     for place, data_set in enumerate(historical_data[10:-1]):
@@ -67,11 +74,12 @@ def moving_averages():
             cash += new_cash
             ethereum -= number_of_ethereum_being_sold
             print "Just sold: " + str(number_of_ethereum_being_sold) + " Ethereum!"
-
-        portfolio_value += cash + (ethereum * float(data_set["close"]))
+        portfolio_value = cash + (ethereum * float(data_set["close"]))
         x_values.append(place)
         y_values.append(portfolio_value)
-    print portfolio_value
+    message = "Backtest Complete!"
+    print "Final portfolio value:" + str(portfolio_value)
+    plot_graph(x_values, y_values)
 
 
 def backtest_ethereum(strategy):
@@ -103,7 +111,7 @@ def start_backtesting():
     if ticker == "ETH":
         Thread(target=backtest_ethereum, kwargs={"strategy":strategy}).start()
     message = "Backtesting ETH..."
-    return redirect("127.0.0.1:5000")
+    return redirect("http://127.0.0.1:5000")
 
 
 if __name__ == "__main__":
