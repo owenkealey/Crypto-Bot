@@ -7,13 +7,11 @@ import requests, json, webbrowser
 app = Flask(__name__)
 message = ""
 historical_data = []
-x_values = []
-y_values = []
 
 
 def start():
     """
-    Here we fetch historical data fromo cryptocompare and record it 
+    Here we fetch historical data from cryptocompare and record it 
     in our global variable 'historical_data' for use by our backtester
     Then, we open up our browser to localhost:5000 where our server should
     respond with the HTML GUI
@@ -32,6 +30,55 @@ def start():
     webbrowser.open("http://127.0.0.1:5000")
 
 
+def get_average(averages_list):
+    total = 0 
+    for data_set in averages_list:
+        total += float(data_set["close"])
+    return total/len(averages_list)
+
+
+def moving_averages():
+    """
+    If the 3 day average price of ETH is above the 5 day average price, buy. If below, sell.
+    """
+    ethereum = 0
+    cash = 10000
+    portfolio_value = 0
+    x_values = []
+    y_values = []
+    for place, data_set in enumerate(historical_data[10:-1]):
+        three_day_average = get_average([historical_data[place-1], historical_data[place-2], historical_data[place-3]])
+        five_day_average = get_average([historical_data[place-1], 
+                                       historical_data[place-2],
+                                       historical_data[place-3],
+                                       historical_data[place-4],
+                                       historical_data[place-5]])
+        if three_day_average > five_day_average:
+            cash_used_to_buy = cash/2
+            price = float(data_set["close"])
+            number_of_ethereum_we_just_bought = cash_used_to_buy/price
+            ethereum += number_of_ethereum_we_just_bought
+            cash -= cash_used_to_buy
+            print "Just bought: " + str(number_of_ethereum_we_just_bought) + " Ethereum!"
+        if ethereum > 1 and three_day_average < five_day_average:
+            price = float(data_set["close"])
+            number_of_ethereum_being_sold = ethereum/2
+            new_cash = number_of_ethereum_being_sold * price
+            cash += new_cash
+            ethereum -= number_of_ethereum_being_sold
+            print "Just sold: " + str(number_of_ethereum_being_sold) + " Ethereum!"
+
+        portfolio_value += cash + (ethereum * float(data_set["close"]))
+        x_values.append(place)
+        y_values.append(portfolio_value)
+    print portfolio_value
+
+
+def backtest_ethereum(strategy):
+    if int(strategy) == 1:
+        moving_averages()
+
+
 @app.route("/")
 def index():
     """
@@ -42,7 +89,7 @@ def index():
     return render_template("index.html", message=message)
 
 
-@app.route("/start_backtesting")
+@app.route("/start_backtesting", methods=["POST"])
 def start_backtesting():
     """
     When the user submits the form to start backtesting, this function can see what ticker the user chose and start our
@@ -52,10 +99,11 @@ def start_backtesting():
     global message
     data = request.form 
     ticker = str(data["ticker"])
+    strategy = str(data["strategy"])
     if ticker == "ETH":
-        Thread(target=backtest_ethereum).start()
+        Thread(target=backtest_ethereum, kwargs={"strategy":strategy}).start()
     message = "Backtesting ETH..."
-    return redirect("localhost:5000")
+    return redirect("127.0.0.1:5000")
 
 
 if __name__ == "__main__":

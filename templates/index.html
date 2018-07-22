@@ -11,10 +11,14 @@
     <body>
         <div class="center">
             <img src="static/logo.png" class="logo">
-            <form action="/start_backtesting" method="post">
+            <form action="../start_backtesting" method="post">
                 <select name="ticker" class="dropdown">
                     <option value="default">Select a Crypto!</option>
                     <option value="ETH">Ethereum</option>
+                </select>
+                <select name="strategy" class="dropdown">
+                    <option value="default">Select a Strategy!</option>
+                    <option value="1">Moving Averages</option>
                 </select>
                 <input type="submit" class="button">
             </form>
