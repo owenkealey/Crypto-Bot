@@ -31,6 +31,9 @@ def start():
 
 
 def plot_graph(x, y):
+    """
+    Plots our Graph
+    """
     plt.plot(x, y)
     plt.xlabel("Day")
     plt.ylabel("Portfolio Value")
@@ -38,6 +41,9 @@ def plot_graph(x, y):
 
 
 def get_average(averages_list):
+    """
+    Gets the average of some numbers
+    """
     total = 0 
     for data_set in averages_list:
         total += float(data_set["close"])
@@ -83,6 +89,9 @@ def moving_averages():
 
 
 def backtest_ethereum(strategy):
+    """
+    Determines what strategy to use
+    """
     if int(strategy) == 1:
         moving_averages()
 
@@ -117,6 +126,3 @@ def start_backtesting():
 if __name__ == "__main__":
     start()
     app.run()
-
-
-
