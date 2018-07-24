@@ -2,12 +2,12 @@ import matplotlib.pyplot as plt
 import requests, json
 
 
-def moving_averages(historical_data, ticker):
+def moving_averages(historical_data, ticker, initial_cash ):
     """
     If the 3 day average price of ETH is above the 5 day average price, buy. If below, sell.
     """
     crypto = 0
-    cash = 10000
+    cash = int(initial_cash)
     x_values = []
     y_values = []
     for place, data_set in enumerate(historical_data[10:-1]):
@@ -73,8 +73,9 @@ def start():
         quit()
     historical_data = data
     print "Fetched historical data for crypto: " + ticker
+    initial_cash = raw_input("Enter initial investment(cash):")
     strategy = raw_input("Select 1) for the moving averages strategy:")
     if strategy == "1":
-        moving_averages(historical_data, ticker)
+        moving_averages(historical_data, ticker, initial_cash)
 
 start()
