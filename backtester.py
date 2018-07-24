@@ -1,61 +1,12 @@
-from flask import Flask, render_template, redirect, request
-from threading import Thread
 import matplotlib.pyplot as plt
-import requests, json, webbrowser
-
-#define global variables. app = our server, historical_data is for backtesting
-app = Flask(__name__)
-message = ""
-historical_data = []
+import requests, json
 
 
-def start():
-    """
-    Here we fetch historical data from cryptocompare and record it 
-    in our global variable 'historical_data' for use by our backtester
-    Then, we open up our browser to localhost:5000 where our server should
-    respond with the HTML GUI
-    """
-    global historical_data
-    print "Starting Crypto Bot V1" 
-    data_url = 'https://min-api.cryptocompare.com/data/histominute' +\
-          '?fsym=ETH' +\
-          '&tsym=USD' +\
-          '&limit=2000' +\
-          '&aggregate=1'
-    response = requests.get(data_url)
-    data = response.json()['Data']
-    historical_data = data
-    print "Fetched historical data for ticker ETH. Opening GUI."
-    webbrowser.open("http://127.0.0.1:5000")
-
-
-def plot_graph(x, y):
-    """
-    Plots our Graph
-    """
-    plt.plot(x, y)
-    plt.xlabel("Day")
-    plt.ylabel("Portfolio Value")
-    plt.show()
-
-
-def get_average(averages_list):
-    """
-    Gets the average of some numbers
-    """
-    total = 0 
-    for data_set in averages_list:
-        total += float(data_set["close"])
-    return total/len(averages_list)
-
-
-def moving_averages():
+def moving_averages(historical_data, ticker):
     """
     If the 3 day average price of ETH is above the 5 day average price, buy. If below, sell.
     """
-    global message
-    ethereum = 0
+    crypto = 0
     cash = 10000
     x_values = []
     y_values = []
@@ -69,18 +20,18 @@ def moving_averages():
         if three_day_average > five_day_average:
             cash_used_to_buy = cash/2
             price = float(data_set["close"])
-            number_of_ethereum_we_just_bought = cash_used_to_buy/price
-            ethereum += number_of_ethereum_we_just_bought
+            number_of_crypto_we_just_bought = cash_used_to_buy/price
+            crypto += number_of_crypto_we_just_bought
             cash -= cash_used_to_buy
-            print "Just bought: " + str(number_of_ethereum_we_just_bought) + " Ethereum!"
-        if ethereum > 1 and three_day_average < five_day_average:
+            print "Just bought: " + str(number_of_crypto_we_just_bought) + " " + ticker
+        if crypto > 1 and three_day_average < five_day_average:
             price = float(data_set["close"])
-            number_of_ethereum_being_sold = ethereum/2
-            new_cash = number_of_ethereum_being_sold * price
+            number_of_crypto_being_sold = crypto/2
+            new_cash = number_of_crypto_being_sold * price
             cash += new_cash
-            ethereum -= number_of_ethereum_being_sold
-            print "Just sold: " + str(number_of_ethereum_being_sold) + " Ethereum!"
-        portfolio_value = cash + (ethereum * float(data_set["close"]))
+            crypto -= number_of_crypto_being_sold
+            print "Just sold: " + str(number_of_crypto_being_sold) + " " + ticker
+        portfolio_value = cash + (crypto * float(data_set["close"]))
         x_values.append(place)
         y_values.append(portfolio_value)
     message = "Backtest Complete!"
@@ -88,41 +39,47 @@ def moving_averages():
     plot_graph(x_values, y_values)
 
 
-def backtest_ethereum(strategy):
+def get_average(averages_list):
     """
-    Determines what strategy to use
+    Gets the average of some numbers
     """
-    if int(strategy) == 1:
-        moving_averages()
+    total = 0 
+    for data_set in averages_list:
+        total += float(data_set["close"])
+    return total/len(averages_list)
 
 
-@app.route("/")
-def index():
+def plot_graph(x, y):
     """
-    When a request is made to the / endpoint of localhost, this function is called, responding
-    with our HTML file
+    Plots our Graph
     """
-    global message
-    return render_template("index.html", message=message)
+    plt.plot(x, y)
+    plt.xlabel("Day")
+    plt.ylabel("Portfolio Value")
+    plt.show()
 
 
-@app.route("/start_backtesting", methods=["POST"])
-def start_backtesting():
+def start():
     """
-    When the user submits the form to start backtesting, this function can see what ticker the user chose and start our
-    backtesting function in a seperate Thread. It then redirects the user back to the / endpoint where our index function
-    handles the user's request from there.
+    Here we fetch historical data from cryptocompare and record it 
+    in our global variable 'historical_data' for use by our backtester
+    Then, we open up our browser to localhost:5000 where our server should
+    respond with the HTML GUI
     """
-    global message
-    data = request.form 
-    ticker = str(data["ticker"])
-    strategy = str(data["strategy"])
-    if ticker == "ETH":
-        Thread(target=backtest_ethereum, kwargs={"strategy":strategy}).start()
-    message = "Backtesting ETH..."
-    return redirect("http://127.0.0.1:5000")
+    global historical_data
+    print "Starting Crypto Bot V1" 
+    ticker = raw_input("Enter ticker:").upper()
+    data_url = 'https://min-api.cryptocompare.com/data/histominute?fsym=' + ticker + '&tsym=USD&limit=2000&aggregate=1'
+    response = requests.get(data_url)
+    try:
+        data = response.json()['Data']
+    except:
+        print "Sorry, this crypto isnt supported!"
+        quit()
+    historical_data = data
+    print "Fetched historical data for crypto: " + ticker
+    strategy = raw_input("Select 1) for the moving averages strategy:")
+    if strategy == "1":
+        moving_averages(historical_data, ticker)
 
-
-if __name__ == "__main__":
-    start()
-    app.run()
+start()
