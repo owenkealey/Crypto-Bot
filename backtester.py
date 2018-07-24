@@ -34,7 +34,6 @@ def moving_averages(historical_data, ticker):
         portfolio_value = cash + (crypto * float(data_set["close"]))
         x_values.append(place)
         y_values.append(portfolio_value)
-    message = "Backtest Complete!"
     print "Final portfolio value:" + str(portfolio_value)
     plot_graph(x_values, y_values)
 
@@ -61,12 +60,8 @@ def plot_graph(x, y):
 
 def start():
     """
-    Here we fetch historical data from cryptocompare and record it 
-    in our global variable 'historical_data' for use by our backtester
-    Then, we open up our browser to localhost:5000 where our server should
-    respond with the HTML GUI
+    Here we ask the user for some basic input, fetch our historical data and determine what strategy to use.
     """
-    global historical_data
     print "Starting Crypto Bot V1" 
     ticker = raw_input("Enter ticker:").upper()
     data_url = 'https://min-api.cryptocompare.com/data/histominute?fsym=' + ticker + '&tsym=USD&limit=2000&aggregate=1'
